@@ -1,0 +1,91 @@
+<!-- templates/template1.html -->
+<div class="resume-container">
+    <!-- LEFT COLUMN -->
+    <div class="left-column">
+      <div class="profile-section">
+        <img src="{{profilePic}}" alt="Profile Picture" class="profile-pic" />
+        <h2>{{fullName}}</h2>
+        <p class="designation">{{designation}}</p>
+      </div>
+  
+      <div class="contact-section">
+        <h3>Contact</h3>
+        <ul>
+          <li>Email: {{email}}</li>
+          <li>Phone: {{phone}}</li>
+          <li>LinkedIn: {{linkedin}}</li>
+          <li>GitHub: {{github}}</li>
+          <li>Address: {{address}}</li>
+        </ul>
+      </div>
+  
+      <div class="skills-section">
+        <h3>Skills</h3>
+        <ul>
+          {{#each skills}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </div>
+  
+      <div class="languages-section">
+        <h3>Languages</h3>
+        <ul>
+          {{#each additionalInfo.languages}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </div>
+    </div>
+  
+    <!-- RIGHT COLUMN -->
+    <div class="right-column">
+      <section class="summary-section">
+        <h2>Profile Summary</h2>
+        <p>{{summary}}</p>
+      </section>
+  
+      <section class="education-section">
+        <h2>Education</h2>
+        {{#each education}}
+        <div class="education-item">
+          <h3>{{degree}}</h3>
+          <p>{{institution}} | {{year}}</p>
+          <p>GPA: {{gpa}}</p>
+        </div>
+        {{/each}}
+      </section>
+  
+      <section class="experience-section">
+        <h2>Experience</h2>
+        {{#each experience}}
+        <div class="experience-item">
+          <h3>{{jobTitle}} - {{company}}</h3>
+          <p>{{startDate}} - {{endDate}}</p>
+          <p>{{description}}</p>
+        </div>
+        {{/each}}
+      </section>
+  
+      <section class="projects-section">
+        <h2>Projects</h2>
+        {{#each projects}}
+        <div class="project-item">
+          <h3>{{title}}</h3>
+          <p>{{description}}</p>
+          <p><strong>Technologies:</strong> {{technologies}}</p>
+        </div>
+        {{/each}}
+      </section>
+  
+      <section class="certifications-section">
+        <h2>Certifications</h2>
+        <ul>
+          {{#each certifications}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </section>
+    </div>
+  </div>
+  

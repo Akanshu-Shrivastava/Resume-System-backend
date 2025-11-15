@@ -1,96 +1,181 @@
 import Resume from "../models/resume.js";
+import { generateResumePDF } from "../utils/generateResumePDF.js";
 
-// 🟢 Create or Update Resume
-export const createOrUpdateResume = async (req, res) => {
+// 🧠 Utility: Generate an automatic summary if user didn’t provide one
+const generateAutoSummary = (resume) => {
+  const { personalInfo, skills, education, experience } = resume;
+
+  const firstName = personalInfo?.firstName || "This individual";
+  const lastName = personalInfo?.lastName ? ` ${personalInfo.lastName}` : "";
+  const name = `${firstName}${lastName}`;
+
+  const skillText = skills?.length
+    ? `skilled in ${skills.slice(0, 3).join(", ")}`
+    : "with a diverse skill set";
+
+  const eduText = education?.length
+    ? `having studied at ${education[0].institution}`
+    : "with a strong academic foundation";
+
+  const expText = experience?.length
+    ? `and experienced in ${experience[0].role} at ${experience[0].company}`
+    : "";
+
+  return `${name} is a passionate professional ${skillText}, ${eduText} ${expText}. 
+They are eager to contribute to innovative projects and continue learning new technologies.`;
+};
+
+// ====================== CREATE RESUME ======================
+export const createResume = async (req, res) => {
   try {
-    const { personalInfo, education, experience, projects, skills, achievements } = req.body;
-
-    let resume = await Resume.findOne({ user: req.user._id });
-
-    if (resume) {
-      resume.personalInfo = personalInfo;
-      resume.education = education;
-      resume.experience = experience;
-      resume.projects = projects;
-      resume.skills = skills;
-      resume.achievements = achievements;
-      await resume.save();
-      return res.json({ message: "Resume updated successfully", resume });
-    } else {
-      resume = new Resume({
-        user: req.user._id,
-        personalInfo,
-        education,
-        experience,
-        projects,
-        skills,
-        achievements,
-      });
-      await resume.save();
-      return res.status(201).json({ message: "Resume created successfully", resume });
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: "User not authorized" });
     }
+
+    const resumeData = req.body;
+
+    // ✅ Auto-generate summary if not provided
+    let summaryText = resumeData.summary?.trim();
+    if (!summaryText) {
+      summaryText = generateAutoSummary(resumeData);
+    }
+
+    const resume = new Resume({
+      ...resumeData,
+      user: req.user.id,
+      summary: summaryText,
+    });
+
+    await resume.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Resume created successfully",
+      data: resume,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error creating resume:", error);
+    return res.status(500).json({ success: false, message: "Error creating resume" });
   }
 };
 
-// 🔵 Get Resume
+// ====================== GET ALL RESUMES ======================
 export const getResume = async (req, res) => {
   try {
-    const resume = await Resume.findOne({ user: req.user._id });
-    if (!resume) return res.status(404).json({ message: "Resume not found" });
-    res.json(resume);
+    const resumes = await Resume.find({ user: req.user.id });
+    return res.status(200).json(resumes);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error fetching resumes:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// 🔴 Delete Resume
+// ====================== GET SINGLE RESUME ======================
+export const getResumeById = async (req, res) => {
+  try {
+    const resume = await Resume.findOne({ _id: req.params.id, user: req.user.id });
+
+    if (!resume) {
+      return res.status(404).json({ success: false, message: "Resume not found" });
+    }
+
+    return res.status(200).json(resume);
+  } catch (error) {
+    console.error("Error fetching single resume:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ====================== UPDATE RESUME ======================
+export const updateResume = async (req, res) => {
+  try {
+    const resume = await Resume.findOne({ _id: req.params.id, user: req.user.id });
+    if (!resume) {
+      return res.status(404).json({ success: false, message: "Resume not found" });
+    }
+
+    // Merge updates
+    Object.assign(resume, req.body);
+
+    // ✅ Regenerate summary if none provided in the update
+    if (!req.body.summary?.trim()) {
+      resume.summary = generateAutoSummary(resume);
+    }
+
+    await resume.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Resume updated successfully",
+      data: resume,
+    });
+  } catch (error) {
+    console.error("Error updating resume:", error);
+    return res.status(500).json({ success: false, message: "Error updating resume" });
+  }
+};
+
+// ====================== DELETE RESUME ======================
 export const deleteResume = async (req, res) => {
   try {
-    await Resume.findOneAndDelete({ user: req.user._id });
-    res.json({ message: "Resume deleted successfully" });
+    const deleted = await Resume.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user.id,
+    });
+
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Resume not found" });
+    }
+
+    return res.status(200).json({ success: true, message: "Resume deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error deleting resume:", error);
+    return res.status(500).json({ success: false, message: "Error deleting resume" });
   }
 };
 
-// ✨ Auto-generate Resume Summary
+// ====================== AUTO SUMMARY API ======================
 export const generateSummary = async (req, res) => {
   try {
-    const resume = await Resume.findOne({ user: req.user._id });
-    if (!resume) return res.status(404).json({ message: "Resume not found" });
-
-    const { personalInfo, education, experience, projects, skills, achievements } = resume;
-
-    // Basic text-based summary logic
-    let summary = `Professional Summary for ${personalInfo?.fullName || "the candidate"}:\n\n`;
-
-    if (education?.length > 0) {
-      summary += `🎓 Education: Graduated in ${education[0].degree} from ${education[0].institution} (${education[0].year}) with a grade of ${education[0].grade}.\n\n`;
-    }
-
-    if (experience?.length > 0) {
-      summary += `💼 Experience: Worked at ${experience[0].company} as ${experience[0].position} for ${experience[0].duration}, focusing on ${experience[0].description}.\n\n`;
-    }
-
-    if (projects?.length > 0) {
-      summary += `🚀 Project: ${projects[0].title} — ${projects[0].description} using ${projects[0].techStack.join(", ")}.\n\n`;
-    }
-
-    if (skills?.length > 0) {
-      summary += `🧩 Key Skills: ${skills.join(", ")}.\n\n`;
-    }
-
-    if (achievements?.length > 0) {
-      summary += `🏅 Achievements: ${achievements.join(", ")}.\n\n`;
-    }
-
-    summary += `This summary is auto-generated to highlight the candidate's technical strengths and professional experience.`;
-
-    res.status(200).json({ summary });
+    const summary = generateAutoSummary(req.body);
+    return res.status(200).json({ success: true, autoSummary: summary });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error generating summary:", error);
+    return res.status(500).json({ success: false, message: "Error generating summary" });
   }
 };
 
+// ====================== FILE UPLOAD ======================
+export const uploadFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    return res.status(200).json({ success: true, fileUrl });
+  } catch (error) {
+    console.error("File upload error:", error);
+    return res.status(500).json({ success: false, message: "Error uploading file" });
+  }
+};
+
+// ====================== GENERATE PDF ======================
+export const generatePDFController = async (req, res) => {
+  try {
+    const resume = await Resume.findOne({ user: req.user.id });
+    if (!resume) {
+      return res.status(404).json({ message: "No resume found" });
+    }
+
+    const pdfBuffer = await generateResumePDF(resume.toObject());
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${resume.personalInfo.fullName || "Resume"}.pdf"`,
+    });
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    res.status(500).json({ message: "Failed to generate PDF" });
+  }
+};

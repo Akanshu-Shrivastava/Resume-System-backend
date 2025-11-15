@@ -1,0 +1,26 @@
+.resume-container {
+    display: flex;
+    max-width: 900px;
+    margin: 40px auto;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: "Poppins", sans-serif;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .left-column {
+    width: 30%;
+    background-color: #1b263b;
+    color: #fff;
+    padding: 20px;
+  }
+  
+  .right-column {
+    width: 70%;
+    background-color: #fff;
+    padding: 30px;
+  }
+  
+  /* rest of the CSS same as before... */
+  

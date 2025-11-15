@@ -1,47 +1,51 @@
+// models/Resume.js
 import mongoose from "mongoose";
 
-const resumeSchema = new mongoose.Schema(
+const resumeSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  personalInfo: {
+    fullName: String,
+    email: String,
+    phone: String,
+    address: String,
+    linkedin: String,
+    github: String,
+    profilePic: String
+  },
+  summary: String,
+  education: [
     {
-        user:{
-            type: mongoose.Schema.Types.ObjectId,
-            ref:"User",
-            required:true,
-        },
-        pesonalInfo:{
-            fullname: String,
-            email: String,
-            phone: String,
-            address: String,
-            linkedin: String,
-            github: String,
-        },
-        education:[
-            {
-                degree: String,
-                institution: String,
-                year: String,
-                grade: String,
-            },
-        ],
-        experience:[
-            {
-                company: String,
-                position: String,
-                duration: String,
-                description: String,
-            },
-        ],
-        projects: [
-            {
-                title: String,
-                description: String,
-                techStack: [String],
-            },
-        ],
-        skills: [String],
-        achievements: [String],
-    },
-    {timestamps: true}
-);
+      degree: String,
+      institution: String,
+      year: String,
+      gpa: String
+    }
+  ],
+  experience: [
+    {
+      jobTitle: String,
+      company: String,
+      startDate: String,
+      endDate: String,
+      description: String
+    }
+  ],
+  skills: {
+    type: [String],
+    required: true
+  },
+  projects: [
+    {
+      title: String,
+      description: String,
+      technologies: [String]
+    }
+  ],
+  certifications: [String],
+  additionalInfo: {
+    hobbies: [String],
+    languages: [String]
+  }
+}, { timestamps: true });
 
-export default mongoose.model("Resume",resumeSchema);
+export default mongoose.model("Resume", resumeSchema);
